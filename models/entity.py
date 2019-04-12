@@ -9,19 +9,25 @@ class Entity:
     
     @property
     def sql(self):
-        return "INSERT IN TO {table_name} VALUE ({value});".format(
+        attrs, values = self._get_value()
+        return "INSERT INTO {table_name} ({attrs})  VALUES ({values});".format(
             table_name = self.table_name,
-            value = self._get_value()
+            attrs = attrs,
+            values = values
         )
 
     def _get_value(self):
         values = []
+        attrs = []
         for attr_, value in self.__dict__.items():
+            if attr_ == 'table_name':
+                continue
+            attrs.append(attr_)
             if isinstance(value, str):
-                values.append('{}=\'{}\''.format(attr_, value))
+                values.append('\'{}\''.format(value))
             elif value is None:
-                values.append("{}=null".format(attr_))
+                values.append("null")
             else:
-                values.append('{}={}'.format(attr_, value))
-        return ','.join(values)
+                values.append('{}'.format(value))
+        return ','.join(attrs) , ','.join(values)
 

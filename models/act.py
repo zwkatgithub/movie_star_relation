@@ -1,4 +1,4 @@
-from entity import Entity
+from .entity import Entity
 
 class Act(Entity):
     def __init__(self, star_id, movie_id):

@@ -7,5 +7,9 @@ class Sql:
             ip, username, password, db
         )
         self.cursor = self.db.cursor()
+    def commit(self):
+        self.db.commit()
+    def rollback(self):
+        self.db.rollback()
 
-db = Sql("localhost", "learn", "zwk19950102", "ms")
+db = Sql("localhost", "learn", "123456", "ms")
