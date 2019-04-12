@@ -175,6 +175,8 @@ class Spider:
                     db.cursor.execute(
                         "SELECT id FROM star WHERE source_id=\'{}\';".format(source_id))
                     ids.append(db.cursor.fetchone()[0])
+        else:
+            print("star soups is None")
 
         return res, ids
 
