@@ -76,7 +76,6 @@ class Spider:
         page = requests.get(url, headers=Spider.headers)
         soup = BeautifulSoup(page.text, 'lxml')
         return soup
-
     def _create_movie(self, movie, movie_detail_soup):
         source_id = re.search(Spider.num, movie.a['href']).group()
         name = movie.a.img['alt']
@@ -89,8 +88,14 @@ class Spider:
             self.download_img(movie.a.img['src'], img_path)
         filepath = os.path.join(Spider.movie_image_path, filename)
         year = self.year
-        score = movie.div.find('b').text
-        introduction = movie_detail_soup.find('div', class_='plot').p.text
+        if movie.div.find('b') is None:
+            score = None
+        else:
+            score = movie.div.find('b').text
+        if movie_detail_soup.find('div', class_='plot') is None:
+            introduction = None
+        else:
+            introduction = movie_detail_soup.find('div', class_='plot').p.text
         ret = Movie(source_id, name, filepath, year, score, introduction)
         return ret
 
