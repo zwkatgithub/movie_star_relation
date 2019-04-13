@@ -1,5 +1,7 @@
 import os
 import re
+import math
+import time
 import requests
 from bs4 import BeautifulSoup
 from sql import db
@@ -33,7 +35,7 @@ class Spider:
     def _get_pages(self):
         soup = self._get_soup(self.url.format(self.year))
         content = soup.find(attrs={'class': 'lineG pl10 pb12'}).text
-        pages = int(re.search(Spider.num, content).group())
+        pages = math.ceil(int(re.search(Spider.num, content).group()) / 30)
         return pages
 
     def __init__(self, year, data_dict):
@@ -62,18 +64,34 @@ class Spider:
             self.extract_info(movies)
 
     def download_img(self, img_url, filepath):
-        img = requests.get(img_url, headers=Spider.headers)
+        try:
+            img = requests.get(img_url, headers=Spider.headers)
+        except requests.exceptions.ConnectionError as e:
+            print("Download img error ...")
+            time.sleep(3)
+            img = requests.get(img_url, headers=Spider.headers)
         with open(filepath, 'wb') as file:
             file.write(img.content)
 
     def _get_movie_detail(self, movie):
-        page = requests.get(
-            Spider.base_url + movie.a['href'].text, headers=Spider.headers)
+        try:
+            page = requests.get(
+                Spider.base_url + movie.a['href'].text, headers=Spider.headers)
+        except requests.exceptions.ConnectionError as e:
+            print("Movie detail error ...")
+            time.sleep(3)
+            page = requests.get(
+                Spider.base_url + movie.a['href'].text, headers=Spider.headers)
         soup = BeautifulSoup(page.text, 'lxml')
         return soup
 
     def _get_soup(self, url):
-        page = requests.get(url, headers=Spider.headers)
+        try:
+            page = requests.get(url, headers=Spider.headers)
+        except requests.exceptions.ConnectionError as e:
+            print("Soup error ...")
+            time.sleep(3)
+            page = requests.get(url, headers=Spider.headers)
         soup = BeautifulSoup(page.text, 'lxml')
         return soup
     def _create_movie(self, movie, movie_detail_soup):
@@ -188,6 +206,7 @@ class Spider:
 
     def extract_info(self, movie_soups):
         for movie_soup in movie_soups:
+            #time.sleep(3)
             movie_detail_soup = self._get_soup(
                 Spider.base_url + movie_soup.a['href'])
             movie = self._create_movie(movie_soup, movie_detail_soup)
@@ -195,9 +214,11 @@ class Spider:
             res = db.cursor.fetchone()[0]
             if res != 0:
                 continue
-            movie_id = self._insert_entity(movie)
             star_ids = self._process_stars(
                 Spider.base_url + movie_soup.a['href'])
+            if len(star_ids) == 0:
+                continue
+            movie_id = self._insert_entity(movie)
             self._insert_movie_stars(movie_id, star_ids)
             types = None
             for p in movie_soup.find_all("p"):
@@ -217,16 +238,16 @@ class Spider:
                     movietype = MovieType(movie_id, idx)
                     db.cursor.execute(movietype.sql)
                     db.commit()
+            time.sleep(3)
 
 
 if __name__ == "__main__":
-    import math
-    year = 2018
+    import sys
+    year = sys.argv[1]
     spider = Spider(year, None)
-    
-    batch_size = 10
-    for i in range(int(math.ceil(spider.pages/batch_size))):
-        start = i*batch_size + 1
-        end = min((i+1)*batch_size + 1, spider.pages)
-        print('Epoch {}: pages: {}-{}'.format(i+1, start, end))
-        spider.crawling(start,end)
+    pages = list(range(int(sys.argv[2]),spider.pages+1))
+    for page in pages:
+        spider.crawling(page, page+1)
+
+            
+

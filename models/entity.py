@@ -24,7 +24,7 @@ class Entity:
                 continue
             attrs.append(attr_)
             if isinstance(value, str):
-                values.append('\'{}\''.format(value))
+                values.append('\'{}\''.format(value.replace('\'','\\\'')))
             elif value is None:
                 values.append("null")
             else:
