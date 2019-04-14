@@ -243,11 +243,23 @@ class Spider:
 
 if __name__ == "__main__":
     import sys
-    year = sys.argv[1]
-    spider = Spider(year, None)
-    pages = list(range(int(sys.argv[2]),spider.pages+1))
-    for page in pages:
-        spider.crawling(page, page+1)
+    # year = sys.argv[1]
+    # spider = Spider(year, None)
+    # pages = list(range(int(sys.argv[2]),spider.pages+1))
+    # for page in pages:
+    #     spider.crawling(page, page+1)
+
+    years = list(range(int(sys.argv[1]),int(sys.argv[2])))
+    for year in years:
+        spider = Spider(year, None)
+        pages = list(range(1, spider.pages+1))
+        for page in pages:
+            try:
+                spider.crawling(page, page+1)
+            except:
+                with open("error_{}.txt".format(year), 'a') as file:
+                    file.write("{}\n".format(page))
+
 
             
 
